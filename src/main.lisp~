@@ -1,0 +1,8 @@
+;;;; Simple Calculater
+
+
+(defun main ()
+  (format t "Calculater~%")
+  )
+
+(main)
