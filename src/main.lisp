@@ -1,4 +1,10 @@
 ;;;; Simple Calculater
+(defpackage :calculater
+  (:use :cl)
+  (:export
+   :lexer
+   :parser
+   :executer))
 
 
 ;;; v0: 空白区切り, +-の計算を可能にする
@@ -6,8 +12,7 @@
 ;;; v2: 空白区切り, ()の計算を可能にする
 ;;; v3: 空白不要, ()の計算を可能にする
 
-;; TODO s
-;;; TODO: テストを追加. ユニットテスト（個々の関数のテストを行うため）統合テスト（複数のモジュールが関連するシナリオのテスト）
+;; TODO 
 ;;; TODO: エラーケースを追加
 ;;; TODO: quitを追加
 
@@ -18,6 +23,7 @@
 ;;; Lexer : 入力文字列を解析してトークンに変換
 ;; ex. "1 + 1"     => '(1 '+ 1)
 ;; ex. "1 + 1 - 2" => '(1 '+ 1 '- 2)
+;; TODO: lexerもparserのようにreduceでまとめたいがindex管理をして逐次的に実行しているせいでreduceで利用する関数にindex情報を含める必要がある。もしやりたいなら文字列に変えてindex管理を無くしてから書き直す方が良い
 (defun lexer (string)
   (let ((result (list)) (len (length string)))
     (dotimes (i len)
@@ -44,6 +50,7 @@
 ;; ex. '(1 '+ 1)        => '(+ 1 1)
 ;; ex. '(1 '+ 1 '- 2)   => '(- (+ 1 1) 2)
 ;; TODO: setqが多くて可読性が低い。→ reduceを使ってまとめてみる
+;; TODO: やりたいことはリストの各要素を処理して新しいリストを作りたい。ということなのでreduceが最適
 (defun parser (tokens)
   (let ((form '()))
     (loop for token in tokens
@@ -76,21 +83,6 @@
 (defun output (result)
   (format t ">> ~a~%" result))
 
-;;; TESTS
-;;; TODO: あとでテス用の関数を作る
-(equal (lexer "1+1") '(1 + 1))
-(equal (lexer "1 + 1") '(1 + 1))
-(equal (lexer "100+111") '(100 + 111))
-(equal (lexer "100 + 111") '(100 + 111))
-
-(equal (parser '(1 + 1)) '(+ 1 1))
-(equal (parser '(1 + 1 + 1)) '(+ (+ 1 1) 1))
-(equal (parser '(1 + 1 - 1)) '(- (+ 1 1) 1))
-
-(eql (executer '(+ 1 1)) 2)
-(eql (executer '(+ (+ 1 1) 1)) 3)
-(eql (executer '(- (+ 1 1) 1)) 1)
-
 
 (defun main ()
   (format t "Calculater started:)~%")
@@ -104,5 +96,3 @@
 	(format t "Bye:)~%")
 	(return))
       (output result))))
-
-(main)
