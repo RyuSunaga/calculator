@@ -6,7 +6,6 @@
    :parser
    :executer))
 
-
 ;;; v0: 空白区切り, +-の計算を可能にする
 ;;; v1: 空白区切り, */の計算を可能にする
 ;;; v2: 空白区切り, ()の計算を可能にする
@@ -15,8 +14,6 @@
 ;; TODO 
 ;;; TODO: エラーケースを追加
 ;;; TODO: quitを追加
-
-
 
 (defparameter *operands* '(#\+ #\- ))
 
@@ -45,28 +42,25 @@
     ;; pushは先頭に要素を追加するので最後はreverseして返す
     (reverse result)))
 
-
 ;;; Parser : 解析されたトークンをlispで計算可能なリストに変換
 ;; ex. '(1 '+ 1)        => '(+ 1 1)
 ;; ex. '(1 '+ 1 '- 2)   => '(- (+ 1 1) 2)
 ;; TODO: setqが多くて可読性が低い。→ reduceを使ってまとめてみる
 ;; TODO: やりたいことはリストの各要素を処理して新しいリストを作りたい。ということなのでreduceが最適
 (defun parser (tokens)
-  (let ((form '()))
-    (loop for token in tokens
-	  do
-	     (cond
-	       ((numberp token)
-		(if form
-		    (setq form (append form (list token)))		    
-		    (setq form token)))
-	       ((member (%operand-symbol->cahr token) *operands*)
-		(setq form (list token form)))))
-    form))
+  (reduce (lambda (form token)
+	      (cond
+		((numberp token)
+		 (if form
+		     (append form (list token))		    
+		     token))
+		((member (%operand-symbol->cahr token) *operands*)
+		 (list token form))))
+	  tokens
+	  :initial-value nil))
 
 (defun %operand-symbol->cahr (symbol)
   (char (string symbol) 0))
-
 
 ;;; Executer : 計算可能なリストを実行する
 ;; '(+ 1 1)        => 2
@@ -82,7 +76,6 @@
 
 (defun output (result)
   (format t ">> ~a~%" result))
-
 
 (defun main ()
   (format t "Calculater started:)~%")
