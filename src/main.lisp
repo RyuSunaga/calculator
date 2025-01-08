@@ -15,7 +15,7 @@
 ;;; TODO: エラーケースを追加
 ;;; TODO: quitを追加
 
-(defparameter *operands* '(#\+ #\- ))
+(defparameter *operands* '(#\+ #\- #\* #\/))
 
 ;;; Lexer : 入力文字列を解析してトークンに変換
 ;; ex. "1 + 1"     => '(1 '+ 1)
@@ -42,25 +42,39 @@
     ;; pushは先頭に要素を追加するので最後はreverseして返す
     (reverse result)))
 
-;;; Parser : 解析されたトークンをlispで計算可能なリストに変換
-;; ex. '(1 '+ 1)        => '(+ 1 1)
-;; ex. '(1 '+ 1 '- 2)   => '(- (+ 1 1) 2)
-;; TODO: setqが多くて可読性が低い。→ reduceを使ってまとめてみる
-;; TODO: やりたいことはリストの各要素を処理して新しいリストを作りたい。ということなのでreduceが最適
-(defun parser (tokens)
+
+(defun %parser (tokens operands)
+  ;; トークンを受け取り指定したoperandsに含まれる記号が出れば処理する
   (reduce (lambda (form token)
-	      (cond
-		((numberp token)
-		 (if form
-		     (append form (list token))		    
-		     token))
-		((member (%operand-symbol->cahr token) *operands*)
-		 (list token form))))
+	    (cond
+	      ((numberp token)
+	       (if form
+		   (append form (list token))		    
+		   token))
+	      ((member (%operand-symbol->cahr token) operands)
+	       (list token form))
+	      (t (list form token))))
 	  tokens
 	  :initial-value nil))
 
-(defun %operand-symbol->cahr (symbol)
-  (char (string symbol) 0))
+
+;;; Parser : 解析されたトークンをlispで計算可能なリストに変換
+;; ex. '(1 '+ 1)        => '(+ 1 1)
+;; ex. '(1 '+ 1 '- 2)   => '(- (+ 1 1) 2)
+(defun parser (tokens)
+  ;; TODO: ここにpriorityが高いシンボルを追加して合わせて処理したい
+  (mapcar #'parser-p2
+	  (mapcar #'parser-p1 tokens)))
+
+(defun parser-p1 (tokens)
+  (%parser tokens '(#\* #\/)))
+
+(defun parser-p2 (tokens)
+  (%parser tokens '(#\+ #\-)))
+
+
+  (defun %operand-symbol->cahr (symbol)
+    (char (string symbol) 0))
 
 ;;; Executer : 計算可能なリストを実行する
 ;; '(+ 1 1)        => 2
